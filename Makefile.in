@@ -23,8 +23,6 @@ GZIP:=@GZIP@
 @SET_MAKE@
 THISFILE:=Makefile
 
-all: build-lib
-
 all: build-app
 
 @PO_YES@all: build-po
@@ -32,7 +30,7 @@ all: build-app
 build-lib:
 	cd src && ${MAKE}
 
-build-app:
+build-app: build-lib
 	cd tools && ${MAKE}
 
 build-po:
