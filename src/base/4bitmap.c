@@ -272,23 +272,23 @@ static int row_is_empty(Bitmap *bmp, int32 y)
     for (i = 0; i < bytes_to_check; i++)
         if (row[i]) return 0;
 
-    if (row[bytes_to_check] & mask) return 0;
+    if (mask && row[bytes_to_check] & mask) return 0;
     return 1;
 }
 
 static int column_is_empty(Bitmap *bmp, int32 x)
 {
-    int32 byte_offset = x >> 3;
-    int mask = 1 << (7 - (x & 7));
-    int32 bytes_per_row = BYTES_PER_ROW(bmp->width);
-    unsigned char *p = bmp->data[0] + byte_offset;
-    int32 i = bmp->height;
-
-    while(i--)
-    {
-        if (*p & mask) return 0;
-        p += bytes_per_row;
-    }
+	if (bmp->height > 0)
+	{
+		int32 byte_offset = x >> 3;
+		int mask = 1 << (7 - (x & 7));
+		int32 bytes_per_row = BYTES_PER_ROW(bmp->width);
+		unsigned char *p = bmp->data[0] + byte_offset;
+		unsigned char *q = p + (bmp->height - 1) * bytes_per_row;
+		
+		for( ; p != q; p += bytes_per_row )
+			if (*p & mask) return 0;
+	}
 
     return 1;
 }
@@ -301,14 +301,14 @@ MDJVU_IMPLEMENT void mdjvu_bitmap_get_bounding_box(mdjvu_bitmap_t b,
     int32 bottom = BMP->height - 1;
     int32 top = 0;
 
-    while (column_is_empty(BMP, right) && right) right--;
-    while (column_is_empty(BMP, left) && left < right) left++;
+    while (right >= 0 && column_is_empty(BMP, right)) right--;
+    while (left < right && column_is_empty(BMP, left)) left++;
 
     *pl = left;
     *pw = right - left + 1;
 
-    while (row_is_empty(BMP, bottom) && bottom) bottom--;
-    while (row_is_empty(BMP, top) && top < bottom) top++;
+    while (bottom >= 0 && row_is_empty(BMP, bottom)) bottom--;
+    while (top < bottom && row_is_empty(BMP, top)) top++;
 
     *pt = top;
     *ph = bottom - top + 1;
